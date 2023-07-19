@@ -141,7 +141,7 @@ const controller = {
         return res.status(400).json({
           status: 'error',
           error: error,
-          message: 'Error a encontrar el usuario'
+          message: 'Error a encontrar el tópico'
         });
       });
   },
@@ -188,7 +188,7 @@ const controller = {
           return res.status(400).json({
             status: 'error',
             error: error,
-            message: 'No se pudo actualizar al usuario'
+            message: 'Error al eliminar tópico'
           })
         })
     }
@@ -212,7 +212,7 @@ const controller = {
         return res.status(400).json({
           status: 'error',
           error: error,
-          message: 'No se pudo actualizar al usuario'
+          message: 'Error al eliminar tópico'
         })
       })
   }
