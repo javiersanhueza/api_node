@@ -2,6 +2,8 @@
 
 const { validationResult, body } = require('express-validator');
 const bcrypt = require('bcryptjs');
+const fs = require('fs');
+const path = require('path');
 
 const User = require('../models/user');
 const jwt = require('../services/jwt');
@@ -203,7 +205,7 @@ const controller = {
         message: fileName
       });
     }
-    console.log(req.files);
+
     // Conseguir el nombre y la extensión del archivo subido
     const filePath = req.files.file0.path;
     fileName = filePath.split('\\')[2];
@@ -212,17 +214,92 @@ const controller = {
     const fileExt = extSplit[1];
 
     // Comprobar extensión (solo imágenes), si no es válida borrar fichero subido
+    if (fileExt !== 'png' && fileExt !== 'jpg' && fileExt !== 'jpeg' && fileExt !== 'gif') {
+      fs.unlink(filePath, (err) => {
+        return res.status(200).json({
+          status: 'error',
+          message: 'La extensión del archivo no es válida'
+        });
+      })
+    } else {
+      // Sacar el id del usuario identificado
+      const userId = req.user.sub;
 
-    // Sacar el id del usuario identificado
+      // Buscar y actualizar usuario
+      User.findByIdAndUpdate(userId, { image: fileName }, { new: true })
+        .then(userUpdated => {
+          userUpdated.password = undefined;
+          return res.status(200).json({
+            status: 'success',
+            message: 'Acción realizada satisfactoriamente',
+            user: userUpdated
+          });
+        })
+        .catch(error => {
+          return res.status(400).json({
+            status: 'error',
+            error: error,
+            message: 'No se pudo guardar la imagen'
+          })
+        })
+    }
+  },
 
-    // Buscar y actualizar usuario
+  avatar: (req, res) => {
+    const fileName = req.params.fileName;
+    const pathFile = `./uploads/users/${fileName}`;
 
-    // Devolver una respuesta
-    return res.status(200).json({
-      status: 'success',
-      message: 'Acción realizada satisfactoriamente',
-      file_path: fileExt
+    console.log(pathFile);
+
+    fs.exists(pathFile, (exists) => {
+      if (exists) {
+        return res.sendFile(path.resolve(pathFile));
+      } else {
+        return res.status(404).json({
+          status: 'error',
+          message: 'Imagen no existe'
+        })
+      }
     });
+  },
+
+  getUsers: (req, res) => {
+    User.find().exec()
+      .then(users => {
+        return res.status(200).json({
+          status: 'success',
+          message: 'Acción realizada satisfactoriamente',
+          users
+        })
+      })
+      .catch(error => {
+        return res.status(400).json({
+          status: 'error',
+          error: error,
+          message: 'Error a encontrar los usuarios'
+        })
+      })
+  },
+
+  getUser: (req, res) => {
+    const userId = req.params.id;
+
+    User.findById(userId).exec()
+      .then(user => {
+        user.password = undefined;
+        return res.status(200).json({
+          status: 'success',
+          message: 'Acción realizada satisfactoriamente',
+          user
+        })
+      })
+      .catch(error => {
+        return res.status(400).json({
+          status: 'error',
+          error: error,
+          message: 'Error a encontrar el usuario'
+        })
+      })
   }
 };
 
