@@ -215,6 +215,38 @@ const controller = {
           message: 'Error al eliminar tópico'
         })
       })
+  },
+
+  search: (req, res) => {
+    // Sacar string a buscar de la url
+    const searchString = req.params.search;
+
+    // Find or
+    Topic.find({
+      '$or': [
+        { 'title': { '$regex': searchString, '$options': 'i' } },
+        { 'content': { '$regex': searchString, '$options': 'i' } },
+        { 'code': { '$regex': searchString, '$options': 'i' } },
+        { 'lang': { '$regex': searchString, '$options': 'i' } }
+      ]
+    })
+      .sort([['date', 'descending']])
+      .exec()
+      .then(topics => {
+        return res.status(200).json({
+          status: 'success',
+          message: 'Acción realizada satisfactoriamente',
+          topics
+        });
+      })
+      .catch(error => {
+        return res.status(400).json({
+          status: 'error',
+          error: error,
+          message: 'Error al eliminar tópico'
+        })
+      })
+    // Devolver el resultado
   }
 }
 
